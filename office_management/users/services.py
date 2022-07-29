@@ -2,28 +2,31 @@ from flask import request, jsonify
 from flask_jwt_extended import create_access_token, get_jwt_identity, current_user, create_refresh_token
 from marshmallow import ValidationError
 from office_management import db, bcrypt, jwt
-from office_management.users.models import User, UserProfile, PersonalInfo, OfficialInformation, UserRole
+from office_management.users.models import User, UserRole
 from office_management.users.schemas import (UserSchema, RegisterSchema,
-                                             UserProfileSchema, OfficialInformationSchema,
-                                             PersonalInfoSchema, UpdatePasswordSchema)
+                                             UserProfileSchema, UpdatePasswordSchema)
 from office_management.users.validators import user_validation
-
 
 
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
+    """
+        :param _jwt_header:
+        :param jwt_data:
+        :return: IT'S GET CURRENT USER ID AND FETCH USER FROM TABLE AND RETURN A USER OBJECT
+    """
     identity = jwt_data["sub"]
     return User.query.filter_by(id=identity).one_or_none()
 
 
 def login():
-    quote_schema = UserSchema()
+    login_schema = UserSchema()
     json_data = request.get_json()
     if not json_data:
         return {"message": "No input data provided"}, 400
     # Validate and deserialize input
     try:
-        data = quote_schema.load(json_data)
+        data = login_schema.load(json_data)
     except ValidationError as err:
         return err.messages, 422
     email = data["email"]
@@ -34,12 +37,19 @@ def login():
             return jsonify({"msg": "Bad username or password"}), 401
     else:
         return jsonify({"msg": "User not Found."})
-    access_token = create_access_token(identity=user.id, additional_claims={"role": f'{user.user_role[0].role_id}'})
+    access_token = create_access_token(identity=user.id,
+                                       additional_claims={"role": f'{user.user_role[0].role_id}'})
     refresh_token = create_refresh_token(identity=user.id)
     return jsonify(access_token=access_token, refresh_token=refresh_token)
 
 
 def refresh():
+    """
+        This function is for create a new
+        access token using current user id called refresh token,
+        It's used to create refresh token
+            :return: NEW ACCESS TOKEN
+    """
     identity = get_jwt_identity()
     access_token = create_access_token(identity=identity)
     return jsonify(access_token=access_token)
@@ -61,13 +71,8 @@ def register():
             return err.messages, 422
         db.session.add(data)
         db.session.commit()
-        new_profile = UserProfile(user_id=data.id)
-        new_personal_info = PersonalInfo(user_id=data.id)
-        new_official_info = OfficialInformation(user_id=data.id)
         new_role = UserRole(user_id=data.id, role_id=json_data["role_id"])
-        db.session.add(new_official_info)
-        db.session.add(new_profile)
-        db.session.add(new_personal_info)
+
         db.session.add(new_role)
         db.session.commit()
         return {"message": f"{data.username} named new user created Successfully."}, 200
@@ -75,20 +80,20 @@ def register():
         return {"message": "You don't have Credential to perform this action."}, 401
 
 
-# THIS FUNCTION GET CURRENT USER DATA FROM USER PROFILE TABLE
-def user_profile():
+# THIS FUNCTION GET CURRENT USER DATA FROM USER TABLE
+def user_detail():
     user = User.query.filter_by(id=get_jwt_identity()).first()
     if user:
-        user_profile_schema = UserProfileSchema()
-        result = user_profile_schema.dump(user)
+        user_detail_schema = UserProfileSchema()
+        result = user_detail_schema.dump(user)
         return {"User": result}
     else:
         return {"message": "User no found!."}, 401
 
 
-def update_user_profile():
+def update_user_detail():
     """
-    THIS FUNCTION IS UPDATE USER PROFILE TABLE AND UPDATE DATA IN USER PROFILE TABLE
+    THIS FUNCTION IS UPDATE "firstname" and "lastname" FROM "User".
     """
     user_id = get_jwt_identity()
     profile_of_user = User.query.filter_by(id=user_id).first()
@@ -100,7 +105,7 @@ def update_user_profile():
             return {"message": "No input data provided"}, 400
         # Validate and deserialize input
         try:
-            # Due to "instance" pass in load auto object add in user Profile Model
+            # Due to "instance" pass in load auto object add in user Model
             data = user_profile_schema.load(json_data, instance=profile_of_user)
             db.session.commit()
         except ValidationError as err:
@@ -111,72 +116,10 @@ def update_user_profile():
         return {"message": "User not found!."}, 401
 
 
-def update_official_profile():
-    """
-    THIS FUNCTION IS UPDATE OFFICIAL PROFILE TABLE AND UPDATE DATA IN USER OFFICIAL-INFORMATION TABLE
-    """
-    user_id = get_jwt_identity()
-    official_profile_of_user = OfficialInformation.query.filter_by(user_id=user_id).first()
-    if official_profile_of_user:
-        user_off_profile_schema = OfficialInformationSchema()
-        json_data = request.get_json()
-        if not json_data:
-            return {"message": "No input data provided"}, 400
-        # Validate and deserialize input
-        try:
-            data = user_off_profile_schema.load(json_data, instance=official_profile_of_user)
-            db.session.commit()
-        except ValidationError as err:
-            return err.messages, 422
-
-        return {"message": "Your data is Successfully Updated!."}, 200
-    else:
-        return {"message": "User not found!."}, 401
-
-
-def user_official_profile():
-    user_id = get_jwt_identity()
-    user = OfficialInformation.query.filter_by(user_id=user_id).first()
-    if user:
-        user_profile_schema = OfficialInformationSchema()
-        result = user_profile_schema.dump(user)
-        return {"User": result}
-    else:
-        return {"message": "User not found!."}, 401
-
-
-def update_personal_profile():
-    user_id = get_jwt_identity()
-    personal_profile_of_user = PersonalInfo.query.filter_by(user_id=user_id).first()
-    if personal_profile_of_user:
-        user_per_profile_schema = PersonalInfoSchema()
-        json_data = request.get_json()
-        if not json_data:
-            return {"message": "No input data provided"}, 400
-        # Validate and deserialize input
-        try:
-            data = user_per_profile_schema.load(json_data, instance=personal_profile_of_user)
-            db.session.commit()
-        except ValidationError as err:
-            return err.messages, 422
-
-        return {"message": "Your data is Successfully Updated!."}, 200
-    else:
-        return {"message": "User not found!."}, 401
-
-
-def user_personal_profile():
-    user_id = get_jwt_identity()
-    user = PersonalInfo.query.filter_by(user_id=user_id).first()
-    if user:
-        personal_profile_schema = PersonalInfoSchema()
-        result = personal_profile_schema.dump(user)
-        return {"User": result}
-    else:
-        return {"message": "User not found!."}, 401
-
-
 def update_password():
+    """
+    This function use for update password
+    """
     update_password_schema = UpdatePasswordSchema()
     json_data = request.get_json()
     if not bcrypt.check_password_hash(current_user.password, json_data["password"]):
@@ -197,7 +140,7 @@ def delete_user():
     This function is user for delete user from all tables.This method only access by admin and HR
     """
     user_role = user_validation(get_jwt_identity())
-    if user_role == "admin" or user_role == "HR":  # check user role
+    if user_role == 1 or user_role == 2:  # check user role
         json_data = request.get_json()
         userid = json_data["id"]
         user = User.query.get(userid)

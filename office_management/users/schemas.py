@@ -1,7 +1,7 @@
 from marshmallow import fields, Schema, post_load, INCLUDE, validates_schema, ValidationError, EXCLUDE
 from marshmallow import validate
 from office_management import ma
-from office_management.users.models import User, UserProfile, OfficialInformation, PersonalInfo
+from office_management.users.models import User
 from office_management.users.validators import email_validation
 
 
@@ -22,6 +22,7 @@ class RegisterSchema(ma.SQLAlchemyAutoSchema):
     is_active = fields.Boolean()
 
     class Meta:
+        model = User
         include_fk = True
         unknown = EXCLUDE
 
@@ -58,18 +59,3 @@ class UserProfileSchema(ma.SQLAlchemyAutoSchema):
         ordered = True
         exclude = ("id", "password")
 
-
-class OfficialInformationSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = OfficialInformation
-        unknown = INCLUDE
-        load_instance = True
-        exclude = ("id",)
-
-
-class PersonalInfoSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = PersonalInfo
-        unknown = INCLUDE
-        load_instance = True
-        exclude = ("id",)
