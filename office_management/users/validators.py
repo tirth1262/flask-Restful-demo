@@ -1,5 +1,5 @@
 from marshmallow import ValidationError
-from office_management.users.models import User
+from office_management.users.models import User, UserRole
 
 
 def email_validation(email):
@@ -9,5 +9,5 @@ def email_validation(email):
 
 
 def user_validation(user_id):
-    user = User.query.filter_by(id=user_id).first()
-    return user.role
+    user = UserRole.query.filter_by(user_id=user_id).first()
+    return user.role_id

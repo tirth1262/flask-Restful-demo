@@ -6,7 +6,7 @@ from office_management.users.services import (login, register,
                                               update_official_profile,
                                               user_official_profile, update_personal_profile,
                                               user_personal_profile, update_password, delete_user, refresh)
-
+from office_management.users.decorators import admin_required
 
 class Login(Resource):
     def post(self):
@@ -26,7 +26,8 @@ class Register(Resource):
 
 
 class Profile(Resource):
-    @jwt_required()
+    # @jwt_required()
+    @admin_required()
     def get(self):
         return user_profile()
 

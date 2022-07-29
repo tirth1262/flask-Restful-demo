@@ -1,4 +1,4 @@
-from marshmallow import fields, Schema, post_load, INCLUDE, validates_schema, ValidationError
+from marshmallow import fields, Schema, post_load, INCLUDE, validates_schema, ValidationError, EXCLUDE
 from marshmallow import validate
 from office_management import ma
 from office_management.users.models import User, UserProfile, OfficialInformation, PersonalInfo
@@ -14,14 +14,20 @@ class UserSchema(Schema):
 class RegisterSchema(ma.SQLAlchemyAutoSchema):
     id = fields.Int(dump_only=True)
     username = fields.Str(required=True)
+    firstname = fields.Str(required=True)
+    lastname = fields.Str(required=True)
     email = fields.Email(required=True, validate=email_validation)
     password = fields.Str(required=True)
-    role = fields.Str(required=True)
-    team = fields.Str(required=True)
+    role_id = fields.Int(required=False, default=4)
     is_active = fields.Boolean()
+
+    class Meta:
+        include_fk = True
+        unknown = EXCLUDE
 
     @post_load
     def make_object(self, data, **kwargs):
+        del data["role_id"]
         return User(**data)
 
 
@@ -45,11 +51,12 @@ class UserProfileSchema(ma.SQLAlchemyAutoSchema):
     # profile_image = fields.Str(required=False, default=None)
 
     class Meta:
-        model = UserProfile
+
+        model = User
         unknown = INCLUDE
         load_instance = True
         ordered = True
-        exclude = ("id",)
+        exclude = ("id", "password")
 
 
 class OfficialInformationSchema(ma.SQLAlchemyAutoSchema):
