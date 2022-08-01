@@ -13,11 +13,6 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, default=True)
 
 
-class Role(db.Model):
-    id = db.Column(db.Integer, index=True, primary_key=True)
-    name = db.Column(db.String(50), nullable=True)
-
-
 class UserRole(db.Model):
     id = db.Column(db.Integer, index=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete="CASCADE"), nullable=False)

@@ -1,11 +1,15 @@
 from flask import request
 from marshmallow import ValidationError
 from office_management import db
-from office_management.admin.schemas import RoleSchema
-from office_management.users.models import Role
+from office_management.roles.schemas import RoleSchema
+from office_management.roles.models import Role
 
 
 def all_roles():
+    """
+    THIS FUNCTION FETCH ALL ROLES FROM ROLES TABLE
+    :return: ALL ROLES
+    """
     roles = Role.query.all()
     if roles:
         all_roles_schema = RoleSchema()
@@ -16,6 +20,10 @@ def all_roles():
 
 
 def add_role():
+    """
+        THIS FUNCTION TAKE NAME AND ADD NEW ROLES IN ROLES TABLE
+        :return: CREATE NEW ROLE
+        """
     add_role_schema = RoleSchema()
     json_data = request.get_json()
     if not json_data:
@@ -33,6 +41,10 @@ def add_role():
 
 
 def delete_role():
+    """
+        THIS FUNCTION TAKE ROLE ID AND DELETE ROLE IN ROLES TABLE
+        :return:  DELETE ROLE
+    """
     json_data = request.get_json()
     role_schema = RoleSchema()
     if not json_data:
@@ -53,6 +65,10 @@ def delete_role():
 
 
 def update_role():
+    """
+        THIS FUNCTION TAKE ROLE_ID,NEW_NAME AND UPDATE ROLE IN ROLES TABLE
+        :return:  UPDATE ROLE
+    """
     json_data = request.get_json()
     role_schema = RoleSchema()
     if not json_data:

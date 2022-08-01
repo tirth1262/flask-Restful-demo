@@ -1,5 +1,4 @@
 from marshmallow import fields, Schema, post_load, INCLUDE, validates_schema, ValidationError, EXCLUDE
-from marshmallow import validate
 from office_management import ma
 from office_management.users.models import User
 from office_management.users.validators import email_validation

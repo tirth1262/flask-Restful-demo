@@ -4,7 +4,7 @@ from office_management.users.services import (login, register,
                                               user_detail,
                                               update_user_detail,
                                               update_password, delete_user, refresh)
-from office_management.users.decorators import admin_required
+from office_management.utils.decorators import admin_required
 
 
 class Login(Resource):

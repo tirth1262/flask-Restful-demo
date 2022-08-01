@@ -1,7 +1,7 @@
 from flask_jwt_extended import jwt_required
 from flask_restful import Resource
-from office_management.admin.services import all_roles, add_role, delete_role, update_role
-from office_management.users.decorators import admin_required
+from office_management.roles.services import all_roles, add_role, delete_role, update_role
+from office_management.utils.decorators import admin_required
 
 
 class UserRoles(Resource):

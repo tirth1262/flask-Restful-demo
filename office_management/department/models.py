@@ -9,4 +9,4 @@ class Department(db.Model):
 class DepartmentUser(db.Model):
     id = db.Column(db.Integer, index=True, primary_key=True)
     department_id = db.Column(db.Integer, db.ForeignKey('department.id', ondelete="CASCADE"), nullable=False)
-    user_role_id = db.Column(db.Integer, db.ForeignKey('role.id', ondelete="CASCADE"), nullable=False)
+    user_role_id = db.Column(db.Integer, db.ForeignKey('user_role.id', ondelete="CASCADE"), nullable=False)
