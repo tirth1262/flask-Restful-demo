@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required
 from office_management.users.services import (login, register,
                                               user_detail,
                                               update_user_detail,
-                                              update_password, delete_user, refresh)
+                                              update_password, delete_user, refresh, display_heads)
 from office_management.utils.decorators import admin_required
 
 
@@ -25,8 +25,7 @@ class Register(Resource):
 
 
 class Profile(Resource):
-    # @jwt_required()
-    @admin_required()
+    @jwt_required()
     def get(self):
         return user_detail()
 
@@ -34,7 +33,7 @@ class Profile(Resource):
     def put(self):
         return update_user_detail()
 
-    @jwt_required()
+    @admin_required()
     def delete(self):
         return delete_user()
 
@@ -43,3 +42,9 @@ class UpdatePassword(Resource):
     @jwt_required()
     def put(self):
         return update_password()
+
+
+class UserHead(Resource):
+    @jwt_required()
+    def get(self):
+        return display_heads()

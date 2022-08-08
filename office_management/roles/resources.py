@@ -1,22 +1,29 @@
+from flask import request
 from flask_jwt_extended import jwt_required
 from flask_restful import Resource
-from office_management.roles.services import all_roles, add_role, delete_role, update_role
 from office_management.utils.decorators import admin_required
+from office_management.roles import services
 
 
 class UserRoles(Resource):
+    role_services = services.RoleServices(request)
+
     @jwt_required()
     def get(self):
-        return all_roles()
+        # return display_roles()
+        return services.RoleServices.display_roles()
 
+    @classmethod
     @admin_required()
-    def post(self):
-        return add_role()
+    def post(cls):
+        return cls.role_services.create_role()
 
+    @classmethod
     @admin_required()
-    def put(self):
-        return update_role()
+    def put(cls):
+        return cls.role_services.update_role()
 
+    @classmethod
     @admin_required()
-    def delete(self):
-        return delete_role()
+    def delete(cls):
+        return cls.role_services.delete_role()

@@ -2,10 +2,13 @@ from flask import request, jsonify
 from flask_jwt_extended import create_access_token, get_jwt_identity, current_user, create_refresh_token
 from marshmallow import ValidationError
 from office_management import db, bcrypt, jwt
-from office_management.users.models import User, UserRole
+from office_management.users.models import DepartmentUser
+from office_management.roles.models import Role
+from office_management.users.models import User, UserRole, UserHead
 from office_management.users.schemas import (UserSchema, RegisterSchema,
-                                             UserProfileSchema, UpdatePasswordSchema)
-from office_management.users.validators import user_validation
+                                             UserProfileSchema, UpdatePasswordSchema, head_schema,
+                                             display_head_schema)
+from office_management.languages import Serializer,Response
 
 
 @jwt.user_lookup_loader
@@ -37,8 +40,10 @@ def login():
             return jsonify({"msg": "Bad username or password"}), 401
     else:
         return jsonify({"msg": "User not Found."})
+    role_id = user.user_role.role_id
+    role = Role.query.get(role_id)
     access_token = create_access_token(identity=user.id,
-                                       additional_claims={"role": f'{user.user_role[0].role_id}'})
+                                       additional_claims={"role": f'{role.name}'})
     refresh_token = create_refresh_token(identity=user.id)
     return jsonify(access_token=access_token, refresh_token=refresh_token)
 
@@ -56,33 +61,38 @@ def refresh():
 
 
 def register():
-    user_role = user_validation(get_jwt_identity())
-    if user_role == 1:
-        register_schema = RegisterSchema()
-        json_data = request.get_json()
-        if not json_data:
-            return {"message": "No input data provided"}, 400
-        # Validate and deserialize input
-        try:
-            hs_pw = bcrypt.generate_password_hash(json_data['password']).decode('utf-8')
-            json_data['password'] = hs_pw
-            data = register_schema.load(json_data)
-        except ValidationError as err:
-            return err.messages, 422
-        db.session.add(data)
-        db.session.commit()
-        new_role = UserRole(user_id=data.id, role_id=json_data["role_id"])
-
-        db.session.add(new_role)
-        db.session.commit()
-        return {"message": f"{data.username} named new user created Successfully."}, 200
-    else:
-        return {"message": "You don't have Credential to perform this action."}, 401
+    register_schema = RegisterSchema()
+    json_data = request.get_json()
+    if not json_data:
+        return {"message": "No input data provided"}, 400
+    # Validate and deserialize input
+    try:
+        hs_pw = bcrypt.generate_password_hash(json_data['password']).decode('utf-8')
+        json_data['password'] = hs_pw
+        data = register_schema.load(json_data)
+    except ValidationError as err:
+        return err.messages, 422
+    new_user = User(username=data["username"],
+                    firstname=data["firstname"],
+                    lastname=data["lastname"],
+                    password=data["password"], email=data["email"])
+    db.session.add(new_user)
+    db.session.flush()
+    user_role = UserRole(user_id=new_user.id, role_id=json_data["role_id"])
+    db.session.add(user_role)
+    db.session.flush()
+    user_dept = DepartmentUser(department_id=data["dept_id"], user_role_id=user_role.id)
+    db.session.add(user_dept)
+    db.session.flush()
+    user_head = UserHead(dept_user_id=user_dept.id)
+    db.session.add(user_head)
+    db.session.commit()
+    return {"message": f"{data['username']} named new user created Successfully."}, 200
 
 
 # THIS FUNCTION GET CURRENT USER DATA FROM USER TABLE
 def user_detail():
-    user = User.query.filter_by(id=get_jwt_identity()).first()
+    user = User.query.filter_by(id=current_user.id).first()
     if user:
         user_detail_schema = UserProfileSchema()
         result = user_detail_schema.dump(user)
@@ -106,7 +116,7 @@ def update_user_detail():
         # Validate and deserialize input
         try:
             # Due to "instance" pass in load auto object add in user Model
-            data = user_profile_schema.load(json_data, instance=profile_of_user)
+            user_profile_schema.load(json_data, instance=profile_of_user)
             db.session.commit()
         except ValidationError as err:
             return err.messages, 422
@@ -139,17 +149,47 @@ def delete_user():
     """
     This function is user for delete user from all tables.This method only access by admin and HR
     """
-    user_role = user_validation(get_jwt_identity())
-    if user_role == 1 or user_role == 2:  # check user role
-        json_data = request.get_json()
-        userid = json_data["id"]
-        user = User.query.get(userid)
-        if user:
-            db.session.delete(user)
-            db.session.commit()
-            return {"message": "User deleted Successfully1!."}, 200
+    json_data = request.get_json()
+    userid = json_data["id"]
+    user = User.query.get(userid)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return {"message": "User deleted Successfully1!."}, 200
 
-        else:
-            return {"message": "User not found!."}, 401
     else:
-        return {"message": "You don't have Credential to perform this action."}, 401
+        return {"message": "User not found!."}, 401
+
+
+"""----------------------------------------User HEAD CRUD-----------------------------------"""
+
+
+def add_head():
+    _, data = Serializer.load(request, head_schema)
+    new_head = UserHead(dept_user_id=data.dept_user_id, head_id=data.head_id)
+    db.session.add(new_head)
+    db.session.commit()
+    return {'message': 'New Head added successfully!.'}
+
+
+def display_heads():
+    de_id = current_user.user_role[0].dept_user[0].id
+    all_heads = UserHead.query.filter_by(dept_user_id=de_id).all()
+
+    if all_heads:
+        for i in all_heads:
+            return {"Heads": i.dept_user.user_role.user.username}
+            # all_heads[0].dept_user.user_role.user
+        # data = Serializer.dump(all_heads, display_head_schema)
+
+    return {"message": "NO Heads Available Now."}
+
+
+# def update_head():
+#     _, data = Serializer.load(request, update_head_schema)
+#     all_head = UserHead.query.filter_by(dept_user_id=current_user.id, head_id=data.dept_user_id).all()
+#     print(all_head)
+
+
+
+

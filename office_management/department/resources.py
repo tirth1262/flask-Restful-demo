@@ -1,21 +1,28 @@
+from flask import request
 from flask_restful import Resource
+
+from office_management.department import services
 from office_management.utils.decorators import admin_required
-from office_management.department.services import add_dept, all_dept, delete_dept, update_dept
 
 
 class Department(Resource):
+    department_services = services.DeptServices(request)
+
     @admin_required()
     def get(self):
-        return all_dept()
+        return services.DeptServices.all_dept()
 
+    @classmethod
     @admin_required()
-    def post(self):
-        return add_dept()
+    def post(cls):
+        return cls.department_services.add_dept()
 
+    @classmethod
     @admin_required()
-    def put(self):
-        return update_dept()
+    def put(cls):
+        return cls.department_services.update_dept()
 
+    @classmethod
     @admin_required()
-    def delete(self):
-        return delete_dept()
+    def delete(cls):
+        return cls.department_services.delete_dept()

@@ -27,10 +27,12 @@ def create_app(config_class=Config):
         from office_management.users.routes import users
         from office_management.roles.routes import roles
         from office_management.department.routes import departments
+        from office_management.leaves.routes import leaves
 
         app.register_blueprint(main)
         app.register_blueprint(users)
         app.register_blueprint(roles)
         app.register_blueprint(departments)
+        app.register_blueprint(leaves)
 
         return app

@@ -10,7 +10,7 @@ def admin_required():
             verify_jwt_in_request()
             claims = get_jwt()
             # print("---------->",claims)
-            if claims["role"] == '1':
+            if claims["role"] == 'admin':
                 return fn(*args, **kwargs)
             else:
                 return jsonify(msg="Admins only!"), 403
