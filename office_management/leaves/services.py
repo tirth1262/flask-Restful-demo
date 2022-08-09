@@ -3,11 +3,12 @@ from flask_jwt_extended import get_jwt_identity, current_user
 from flask import request
 from marshmallow import ValidationError
 from office_management import db, jwt
-from office_management.constants import MSG_RETRIEVE_Leaves, MSG_LEAVE_REQUEST, MSG_COMMENT_ADD
+from office_management.constants import MSG_RETRIEVE_Leaves, MSG_LEAVE_REQUEST, MSG_COMMENT_ADD, MSG_NO_HOLIDAYS, \
+    MSG_HOLIDAY_ADD
 from office_management.languages import Serializer, Response
 from office_management.leaves.models import Leave, LeaveStatus, LeaveComments, Holidays
 from office_management.leaves.schemas import leaveApprovalSchema, HolidaySchema, \
-    leave_schema, leave_comment_schema, add_leave_schema
+    leave_schema, leave_comment_schema, add_leave_schema, holidays_schema, add_holidays_schema, delete_holidays_schema
 from office_management.users.models import UserHead, User
 from office_management.users.validators import user_validation
 
@@ -87,7 +88,7 @@ def all_pending_request():
         if data:
             return {"Leaves": data}
         else:
-            return {"message": "No leave available Now."}
+            return {"message": "No leave Requests available Now."}
 
     elif user_role == "team-leader":
         """
@@ -174,14 +175,10 @@ def display_holidays():
     """
     holidays = Holidays.query.all()
     if holidays:
-        holidays_schema = HolidaySchema()
-        try:
-            result = holidays_schema.dump(holidays, many=True)
-        except ValidationError as err:
-            return err.messages, 422
-        return {'Holidays': result}
+        data = Serializer.dump(holidays, holidays_schema)
+        return Response(status_code=HTTPStatus.OK, data=data, message=MSG_COMMENT_ADD.send_success_response())
     else:
-        return {'msg': "No Holidays available"}
+        return Response(status_code=HTTPStatus.BAD_REQUEST, message=MSG_NO_HOLIDAYS).send_error_response()
 
 
 def add_holiday():
@@ -189,20 +186,15 @@ def add_holiday():
         THIS FUNCTION TAKE NAME AND ADD NEW ROLES IN ROLES TABLE
         :return: CREATE NEW ROLE
         """
-    holidays_schema = HolidaySchema()
-    json_data = request.get_json()
-    if not json_data:
-        return {"message": "No input data provided"}, 400
-    # Validate and deserialize input
-    try:
-        data = holidays_schema.load(json_data)
-    except ValidationError as err:
-        return err.messages, 422
 
-    new_holiday = Holidays(name=data.name, date=data.date)
-    db.session.add(new_holiday)
-    db.session.commit()
-    return {'message': 'New Holiday added successfully!.'}
+    is_true, data = Serializer.load(request, add_holidays_schema)
+    if is_true:
+        new_holiday = Holidays(name=data.name, date=data.date)
+        db.session.add(new_holiday)
+        db.session.commit()
+        return Response(status_code=HTTPStatus.OK, message=MSG_HOLIDAY_ADD.send_success_response())
+
+    return Response(status_code=HTTPStatus.BAD_REQUEST, message=data).send_error_response()
 
 
 def delete_holiday():
@@ -210,26 +202,18 @@ def delete_holiday():
         THIS FUNCTION TAKE ROLE ID AND DELETE ROLE IN ROLES TABLE
         :return:  DELETE ROLE
     """
-    json_data = request.get_json()
-    holidays_schema = HolidaySchema()
-    if not json_data:
-        return {"message": "No input data provided"}, 400
-    # Validate and deserialize input
-    try:
-        data = holidays_schema.load(json_data, partial=("name", "date"))
-    except ValidationError as err:
-        return err.messages, 422
 
-    holiday_id = data["id"]
-
-    holiday = Holidays.query.get(holiday_id)
-    if holiday:
-        db.session.delete(holiday)
-        db.session.commit()
-        return {"message": "Role deleted Successfully1!."}, 200
-    else:
-        return {"message": "Role not Found!."}, 401
-
+    is_true, data = Serializer.load(request, delete_holidays_schema)
+    if is_true:
+    # holiday_id = data["id"]
+        holiday = Holidays.query.get(data["id"])
+        if holiday:
+            db.session.delete(holiday)
+            db.session.commit()
+            return {"message": "Role deleted Successfully1!."}, 200
+        else:
+            return {"message": "Role not Found!."}, 401
+    return Response(status_code=HTTPStatus.BAD_REQUEST, message=data).send_error_response()
 
 def update_holiday():
     """

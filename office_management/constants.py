@@ -6,3 +6,6 @@ MSG_LEAVE_REQUEST = "You have Successfully applied for leave Request!."
 MSG_COMMENT_ADD = "Your comment added successfully!."
 MSG_RETRIEVE_DEPARTMENTS = "Successfully retrieved All Departments."
 MSG_ADD_DEPARTMENT = "Successfully added New Department!."
+MSG_NO_HOLIDAYS = "No Holidays available Now!."
+MSG_HOLIDAY_ADD = "Holiday added successfully!."
+

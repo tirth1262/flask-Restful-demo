@@ -70,3 +70,9 @@ class HolidaySchema(ma.SQLAlchemyAutoSchema):
 leave_schema = LeaveSchema(many=True)
 leave_comment_schema = LeaveCommentSchema()
 add_leave_schema = LeaveSchema()
+
+
+
+holidays_schema = HolidaySchema(many=True)
+add_holidays_schema = HolidaySchema()
+delete_holidays_schema = HolidaySchema(partial=("name", "date"))

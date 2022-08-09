@@ -59,10 +59,11 @@ class RoleServices:
         """
         is_true, data = Serializer.load(self.request, update_role_schema)
         if is_true:
-            role_id = data["id"]
+
+            role_id = data.id
             role = Role.query.get(role_id)
             role.name = data.name
-            db.session.commit()
+            # db.session.commit()
             return {"message": "Role Updated Successfully!."}, 200
 
         return Response(status_code=HTTPStatus.BAD_REQUEST, message=data).send_error_response()

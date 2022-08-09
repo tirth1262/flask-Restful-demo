@@ -6,6 +6,8 @@ class DepartmentSchema(Schema):
     name = fields.Str(required=True)
 
 
+
+
 all_dept_schema = DepartmentSchema(many=True)
 add_dept_schema = DepartmentSchema(partial=("id",))
 delete_dept_schema = DepartmentSchema(partial=("name",))
