@@ -9,9 +9,9 @@ class UserSod(Resource):
     sod_services = services.SodServices(request)
 
     @jwt_required()
-    def get(self):
-        # return display_roles()
-        return services.SodServices.display_sod()
+    def get(self, sod_id=None):
+        return (services.SodServices.get_sod_by_id(sod_id) if sod_id
+                else services.SodServices.get_all_sod())
 
     @classmethod
     @jwt_required()

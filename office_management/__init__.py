@@ -1,11 +1,11 @@
 from datetime import timedelta
-
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from office_management.config import Config
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt
+
 db = SQLAlchemy()
 jwt = JWTManager()
 ma = Marshmallow()
@@ -29,6 +29,7 @@ def create_app(config_class=Config):
         from office_management.department.routes import departments
         from office_management.leaves.routes import leaves
         from office_management.sod.routes import sod
+        from office_management.eod.routes import eod
 
         app.register_blueprint(main)
         app.register_blueprint(users)
@@ -36,5 +37,6 @@ def create_app(config_class=Config):
         app.register_blueprint(departments)
         app.register_blueprint(leaves)
         app.register_blueprint(sod)
+        app.register_blueprint(eod)
 
         return app

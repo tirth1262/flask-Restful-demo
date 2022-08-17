@@ -2,6 +2,8 @@ from http import HTTPStatus
 
 from marshmallow import ValidationError
 
+from office_management import db
+
 
 class Response:
     """
@@ -40,17 +42,21 @@ class Serializer:
     def load(request_data, request_schema):
         """
         it load requested_data and Validate it by validation define in request_schema
-        :param instance:
+        :param
         :param request_data: data received from request body
         :param request_schema: marshmallow schema to be used
         :return:
         """
         request_data = request_data.get_json()
-
         if (request_data is None) or (not request_data):
             return False, None
+        # if request_data["id"]:
+        #     instance = table.query.get(request_data["id"])
+        # else:
+        #     instance = None
         try:
             data = request_schema.load(request_data)
+            # db.session.commit()
             return True, data
         except ValidationError as e:
             return False, e.messages

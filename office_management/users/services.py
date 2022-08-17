@@ -1,14 +1,17 @@
+from http import HTTPStatus
+
 from flask import request, jsonify
 from flask_jwt_extended import create_access_token, get_jwt_identity, current_user, create_refresh_token
 from marshmallow import ValidationError
 from office_management import db, bcrypt, jwt
+from office_management.constants import MSG_USER_HEAD_ADD
 from office_management.users.models import DepartmentUser
 from office_management.roles.models import Role
 from office_management.users.models import User, UserRole, UserHead
 from office_management.users.schemas import (UserSchema, RegisterSchema,
                                              UserProfileSchema, UpdatePasswordSchema, head_schema,
                                              display_head_schema)
-from office_management.languages import Serializer,Response
+from office_management.languages import Serializer, Response
 
 
 @jwt.user_lookup_loader
@@ -165,11 +168,13 @@ def delete_user():
 
 
 def add_head():
-    _, data = Serializer.load(request, head_schema)
-    new_head = UserHead(dept_user_id=data.dept_user_id, head_id=data.head_id)
-    db.session.add(new_head)
-    db.session.commit()
-    return {'message': 'New Head added successfully!.'}
+    is_true, data = Serializer.load(request, head_schema)
+    if is_true:
+        new_head = UserHead(dept_user_id=data.dept_user_id, head_id=data.head_id)
+        db.session.add(new_head)
+        db.session.commit()
+        return Response(status_code=HTTPStatus.OK, message=MSG_USER_HEAD_ADD).send_success_response()
+    return Response(status_code=HTTPStatus.BAD_REQUEST, message=data).send_error_response()
 
 
 def display_heads():
@@ -183,13 +188,4 @@ def display_heads():
         # data = Serializer.dump(all_heads, display_head_schema)
 
     return {"message": "NO Heads Available Now."}
-
-
-# def update_head():
-#     _, data = Serializer.load(request, update_head_schema)
-#     all_head = UserHead.query.filter_by(dept_user_id=current_user.id, head_id=data.dept_user_id).all()
-#     print(all_head)
-
-
-
 

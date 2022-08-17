@@ -44,7 +44,6 @@ class leaveApprovalSchema(Schema):
 
 
 class LeaveUpdateSchema(ma.SQLAlchemyAutoSchema):
-
     class Meta:
         model = Leave
         load_instance = True
@@ -71,8 +70,7 @@ leave_schema = LeaveSchema(many=True)
 leave_comment_schema = LeaveCommentSchema()
 add_leave_schema = LeaveSchema()
 
-
-
 holidays_schema = HolidaySchema(many=True)
 add_holidays_schema = HolidaySchema()
 delete_holidays_schema = HolidaySchema(partial=("name", "date"))
+update_holidays_schema = HolidaySchema(partial=("date",))

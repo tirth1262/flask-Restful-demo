@@ -1,7 +1,9 @@
+from flask import request
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required
-from office_management.leaves.services import leave_request, display_comments, leave_comment, display_holidays, \
-    update_holiday, add_holiday, delete_holiday, display_user_leaves
+
+from office_management.leaves import services
+from office_management.leaves.services import leave_request, display_comments, leave_comment, display_user_leaves
 from office_management.utils.decorators import admin_required
 
 
@@ -28,18 +30,22 @@ class LeaveComments(Resource):
 
 
 class Holidays(Resource):
+    holidays_services = services.HolidayServices(request)
+
     @admin_required()
     def get(self):
-        return display_holidays()
+        return services.HolidayServices.display_holidays()
 
+    @classmethod
     @admin_required()
-    def post(self):
-        return add_holiday()
-
-    @admin_required()
-    def put(self):
-        return update_holiday()
+    def post(cls):
+        return cls.holidays_services.add_holiday()
 
     @admin_required()
     def put(self):
-        return delete_holiday()
+        return services.HolidayServices.update_holiday()
+
+    @classmethod
+    @admin_required()
+    def delete(cls):
+        return cls.holidays_services.delete_holiday()

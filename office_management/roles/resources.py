@@ -9,9 +9,10 @@ class UserRoles(Resource):
     role_services = services.RoleServices(request)
 
     @jwt_required()
-    def get(self):
-        # return display_roles()
-        return services.RoleServices.display_roles()
+    def get(self, role_id=None):
+        return (services.RoleServices.get_role_by_id(role_id) if role_id
+                else services.RoleServices.get_all_roles())
+
 
     @classmethod
     @admin_required()

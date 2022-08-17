@@ -9,8 +9,9 @@ class Department(Resource):
     department_services = services.DeptServices(request)
 
     @admin_required()
-    def get(self):
-        return services.DeptServices.all_dept()
+    def get(self, dept_id=None):
+        return (services.DeptServices.get_dept_by_id(dept_id) if dept_id
+                else services.DeptServices.get_all_department())
 
     @classmethod
     @admin_required()
